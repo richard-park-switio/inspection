@@ -15,3 +15,7 @@ variable "vpc_access_connectors" {
     name   = string
   }))
 }
+
+variable "inspection_ip_address" {
+  type = string
+}

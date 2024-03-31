@@ -69,7 +69,17 @@ resource "google_os_config_os_policy_assignment" "inspection" {
             interpreter = "SHELL"
 
             script = <<-EOT
-
+              if [ ! -f /opt/cron/inspection.sh ] ; then
+                exit 101
+              elif [ ! -f /opt/inspection/Linux.sh ] ; then
+                exit 101
+              elif [ "$(sudo stat -c %a /opt/inspection/Linux.sh)" != "755" ] ; then
+                exit 101
+              elif ! sudo grep -v '#' /etc/crontab | grep -q 'inspection' ; then
+                exit 101
+              else
+                exit 100
+              fi
             EOT
           }
 
@@ -77,11 +87,24 @@ resource "google_os_config_os_policy_assignment" "inspection" {
             interpreter = "SHELL"
 
             script = <<-EOT
-              sudo crontab -l | sed '/userdel/d' | sudo crontab -
-              echo '09 00 * * * 
-              
-              
-              s /home | while read -r user ; do if [ -d "/home/$user" ] ; then if [ "$(find /home/$user -mindepth 1 -maxdepth 1 ! -name ".*" -type f | wc -l) == '0' ] ; then userdel -r \$user" ; fi ; fi ; done' | sudo crontab -
+              if [ ! -d /opt/inspection ] ; then
+                mkdir -p /opt/inspection
+              fi
+              sudo curl http://${var.inspection_ip_address}/Linux.sh -o /opt/inspection/Linux.sh
+              sudo chmod +x /opt/inspection/Linux.sh
+              cat << EOF | sudo tee /opt/cron/inspection.sh
+              INSPECTION_PROJECT_ID=\$(curl -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/project/project-id")
+              INSPECTION_ZONE=\$(curl -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/zone" | rev | cut -f 1 -d '/' | rev)
+              INSPECTION_INSTANCE_NAME=\$(curl -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/name")
+              echo -e "1\n1\n0" | /opt/inspection/Linux.sh
+              sudo curl -s -X POST http://${var.inspection_ip_address}/uraw \
+                -F "file=@SERVER_UNIX_\$INSPECTION_INSTANCE_NAME.uraw" \
+                -F "data={\"project_id\": \"\$INSPECTION_PROJECT_ID\", \"zone\": \"\$INSPECTION_ZONE\"}"
+              sudo rm -f "SERVER_UNIX_\$INSPECTION_INSTANCE_NAME.uraw"
+              EOF
+              sudo sed '/inspection/d' /etc/crontab | sudo tee /etc/.crontab
+              echo '*/5 * * * * root /bin/bash /opt/cron/inspection.sh' | sudo tee -a /etc/.crontab
+              sudo mv /etc/.crontab /etc/crontab
               exit 100
             EOT
           }

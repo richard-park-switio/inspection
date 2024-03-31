@@ -10,7 +10,8 @@ locals {
   ]
 
   vpc_access_connectors = [
-    { region = "us-west1", name = "swit-alpha-serverless-uw1" },
-    { region = "us-weest1", name = "test-serverless-mysql" }
+    { region = "us-west1", name = "swit-alpha-serverless-uw1" }
   ]
+
+  inspection_ip_address = "10.64.0.171"
 }

@@ -69,9 +69,9 @@ resource "google_os_config_os_policy_assignment" "hostname" {
             interpreter = "SHELL"
 
             script = <<-EOT
-              metadata_hostname=$(curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/name")
-              hostname=$(hostname)
-              if [ "$metadata_hostname" != "$hostname" ] ; then
+              METADATA_HOSTNAME=$(curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/name")
+              HOSTNAME=$(hostname)
+              if [ "$METADATA_HOSTNAME" != "$HOSTNAME" ] ; then
                 exit 101
               else
                 exit 100
@@ -83,8 +83,8 @@ resource "google_os_config_os_policy_assignment" "hostname" {
             interpreter = "SHELL"
 
             script = <<-EOT
-              metadata_hostname=$(curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/name")
-              sudo hostnamectl set-hostname "$metadata_hostname"
+              METADATA_HOSTNAME=$(curl -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/name")
+              sudo hostnamectl set-hostname "$METADATA_HOSTNAME"
               exit 100
             EOT
           }

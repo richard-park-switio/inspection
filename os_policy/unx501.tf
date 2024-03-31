@@ -83,7 +83,7 @@ resource "google_os_config_os_policy_assignment" "unx501" {
             interpreter = "SHELL"
 
             script = <<-EOT
-              cat << EOF | sudo tee /etc/rsyslog.d/91-unx501.conf1
+              cat << EOF | sudo tee /etc/rsyslog.d/91-unx501.conf
               *.info;mail.none;authpriv.none;cron.none /var/log/messages
               authpriv.* /var/log/secure
               mail.* /var/log/maillog

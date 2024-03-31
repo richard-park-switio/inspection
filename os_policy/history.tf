@@ -73,10 +73,6 @@ resource "google_os_config_os_policy_assignment" "history" {
                 exit 101
               elif [ "$(sudo stat -c %a /etc/profile.d/history.sh)" != "644" ] ; then
                 exit 101
-              if [ ! -f /etc/profile.d/screen.sh ] ; then
-                exit 101
-              elif [ "$(sudo stat -c %a /etc/profile.d/screen.sh)" != "644" ] ; then
-                exit 101
               elif [ ! -f /etc/rsyslog.d/89-history.conf ] ; then
                 exit 101
               elif [ "$(sudo stat -c %a /etc/rsyslog.d/89-history.conf)" != "644" ] ; then
@@ -92,45 +88,23 @@ resource "google_os_config_os_policy_assignment" "history" {
 
             script = <<-EOT
               cat << EOF | sudo tee /etc/profile.d/history.sh
-              who=\$(whoami)
-              date=\$()
-              
-              who=\$(whoami)
-
-
               function logging {
-                last=\$(history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
-                who=\$(whoami)
-                logger -p local0.notice -t history "\$who COMMAND: \$last"
+                LOGGING_LAST_COMMAND=\$(history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+                LOGGING_WHO=\$(whoami)
+                logger -p local0.notice -t history "\$LOGGING_WHO COMMAND: \$LOGGING_LAST_COMMAND"
               }
 
               PROMPT_COMMAND="logging"
               EOF
-
               cat << EOF | sudo tee /etc/rsyslog.d/89-history.conf
               local0.notice /var/log/messages
               EOF
               sudo systemctl restart rsyslog
-
               if [ ! -f /var/log/messages ] ; then
                 sudo touch /var/log/messages
               fi
-
-              cat << EOF | sudo tee /etc/profile.d/screen.sh
-              if [ "\$USER" != "root" ] && [ -z "\$STY" ]; then
-                
-                screen -L -Logfile "/tmp/.$(whoami).$(date '+%y%m%d%H%M').$(date '+%s').log" -S "$(whoami)_$(date '+%s')" /bin/bash --rcfile /etc/profile
-                exit
-              fi
-              if [ -n "$STY" ] ; then
-                cat /etc/issue
-                source ~/.bashrc
-              fi
-              EOF
-
               sudo chown root:adm /var/log/messages
               sudo chmod 640 /var/log/messages
-
               exit 100
             EOT
           }

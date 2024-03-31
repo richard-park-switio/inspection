@@ -17,7 +17,7 @@ for ITEM in $LIST ; do
   IMAGE_FAMILY=$(echo "$ITEM" | cut -f 2 -d ',')
   gcloud compute instances create "richard-$IMAGE_FAMILY" \
     --project=swit-alpha --zone=us-west1-c --machine-type=e2-highcpu-2 \
-    --network-interface=stack-type=IPV4_ONLY,subnet=default,no-address \
+    --network-interface=stack-type=IPV4_ONLY,subnet=swit-alpha-default-uw1,no-address \
     --maintenance-policy=MIGRATE --provisioning-model=STANDARD \
     --service-account=instance@swit-alpha.iam.gserviceaccount.com \
     --scopes=https://www.googleapis.com/auth/cloud-platform \
