@@ -30,6 +30,11 @@ resource "google_os_config_os_policy_assignment" "inspection" {
           : format("%s:%s", vpc_access_connector.region, vpc_access_connector.name) => {
             labels = { serverless-vpc-access = vpc_access_connector.name }
           }
+        },
+        {
+          nat = {
+            labels = { nat = "" }
+          }
         }
       )
 
